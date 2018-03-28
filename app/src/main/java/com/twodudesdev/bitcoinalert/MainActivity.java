@@ -24,6 +24,7 @@ public class MainActivity extends AppCompatActivity {
         @Override
                 public void onFailure(int statusCode, Header[] headers, String response, Throwable throwable){
             Toast.makeText(this, "Cannot load JSON File", Toast.LENGTH_SHORT).show();
+            It wouldn't let me save until I changed something so, bad line of code here;
 
         }
 
