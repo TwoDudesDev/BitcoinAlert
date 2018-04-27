@@ -1,55 +1,58 @@
 package com.twodudesdev.bitcoinalert;
 
-import android.app.Notification;
-import android.app.PendingIntent;
 import android.content.Context;
-import android.content.Intent;
-import android.graphics.Color;
-import android.nfc.Tag;
-import android.support.annotation.NonNull;
-import android.support.v4.app.NotificationManagerCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.support.v4.app.NotificationCompat;
-
-import com.evernote.android.job.Job;
-import com.evernote.android.job.JobCreator;
-import com.evernote.android.job.JobManager;
-import com.evernote.android.job.JobRequest;
+import android.widget.TextView;
+import android.widget.Toast;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import android.database.sqlite.SQLiteDatabase;
-import android.widget.Toast;
 import com.loopj.android.http.AsyncHttpClient;
 import com.loopj.android.http.TextHttpResponseHandler;
 
-import java.util.Random;
+import java.util.Locale;
 
 import cz.msebera.android.httpclient.Header;
 
-
-
 public class MainActivity extends AppCompatActivity {
-    Context context = this;
-    String Burger = "yes";
-
-
+    final Context context = this;
+    TextView textViewDisplayPrice;
+    BitCoinInfo btcCurrent;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         AsyncHttpClient client = new AsyncHttpClient();
-        dataGet(client);
-        JobManager.create(this).addJobCreator(new DemoJobCreator());
+        textViewDisplayPrice = this.findViewById(R.id.textDisplayPrice);
+        getData(client);
     }
-    private void dataGet(AsyncHttpClient client) {
+
+    private void getData(AsyncHttpClient client) {
         client.get("https://api.bitfinex.com/v1/ticker/btcusd", new TextHttpResponseHandler() {
             @Override
             public void onSuccess(int statusCode, Header[] headers, String response) {
                 String toastText = "Successfully downloaded JSON File";
                 Toast successfulJsonToast = Toast.makeText(context, toastText, Toast.LENGTH_SHORT);
                 successfulJsonToast.show();
+                Gson btcGson = new GsonBuilder().create();
+                btcCurrent = btcGson.fromJson(response, BitCoinInfo.class);
+                /*
+                So now we have our former Json string as a Java object, with everything in String
+                variables. The next part converts btcCurrent.last_price into a string for display in
+                activity_main, including the two-digit decimal and the dollar sign. I know it's
+                messy to convert to a Double then back to a string, but it works.
+                 */
+                Double price = Double.parseDouble(btcCurrent.last_price);
+                String lastPrice = String.format(Locale.US,"%.2f", price);
+                lastPrice = "$"+lastPrice;
+
+                textViewDisplayPrice.setText(lastPrice);
+                /*
+                textViewDisplayPrice has to be set here, because this is running asynchronously
+                from the rest of the app. If I put it on line 30, the Json is still getting
+                processed by the time textViewDisplayPrice tries to update.
+                 */
             }
             @Override
             public void onFailure(int statusCode, Header[] headers, String response, Throwable throwable) {
@@ -57,56 +60,8 @@ public class MainActivity extends AppCompatActivity {
                 Toast failedJsonToast = Toast.makeText(context, toastText, Toast.LENGTH_SHORT);
                 failedJsonToast.show();
             }
+
         });
     }
 
-
-
 }
-
-class downloadAndSaveData extends Job {
-    static final String TAG = "Download_Current_Price";
-
-
-    @NonNull
-    @Override
-    protected Result onRunJob(Params params){
-        String ted = "stuff";
-        PendingIntent pi = PendingIntent.getActivity(getContext(),0, new Intent(getContext(), MainActivity.class),0);
-
-        NotificationCompat.Builder notification = new NotificationCompat.Builder(getContext(),ted)
-                .setSmallIcon(R.mipmap.ic_launcher)
-                .setContentTitle("Android Job Demo")
-                .setContentText("Notification from Android Job Demo App.")
-                .setPriority(NotificationCompat.PRIORITY_DEFAULT);
-
-        NotificationManagerCompat jobNoticeManager = NotificationManagerCompat.from(getContext());
-        jobNoticeManager.notify(7, notification.build());
-
-
-        return Result.SUCCESS;
-        }
-
-        static void schedulePeriodic(){
-        new JobRequest.Builder(downloadAndSaveData.TAG)
-                .setPeriodic(120000)
-                .setUpdateCurrent(true)
-                .setPersisted(true)
-                .build()
-                .schedule();
-        }
-}
-
-
-class DemoJobCreator implements JobCreator{
-    @Override
-    public Job create(String tag){
-        switch (tag){
-            case downloadAndSaveData.TAG:
-                return new downloadAndSaveData();
-            default:
-                return null;
-        }
-    }
-}
-
