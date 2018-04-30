@@ -3,6 +3,9 @@ package com.twodudesdev.bitcoinalert;
 import android.content.Context;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
+import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 import com.google.gson.Gson;
@@ -17,6 +20,8 @@ import cz.msebera.android.httpclient.Header;
 public class MainActivity extends AppCompatActivity {
     final Context context = this;
     TextView textViewDisplayPrice;
+    TextView textViewValueBelow;
+    TextView textViewValueAbove;
     BitCoinInfo btcCurrent;
 
     @Override
@@ -25,6 +30,52 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         AsyncHttpClient client = new AsyncHttpClient();
         textViewDisplayPrice = this.findViewById(R.id.textDisplayPrice);
+
+        textViewValueBelow = findViewById(R.id.valueBelow);
+        EditText valueBelowValidator = (EditText) textViewValueBelow;
+        valueBelowValidator.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+            }
+            @Override
+            public void afterTextChanged(Editable s) {
+                int sLength;
+                sLength = s.length();
+                if (sLength <= 0) {
+                    textViewValueBelow.setError("Cannot be empty");
+                }
+                if (sLength > 0 && Double.parseDouble(s.toString()) <= 0) {
+                    textViewValueBelow.setError("Cannot be 0");
+                }
+            }
+        });
+
+        textViewValueAbove = findViewById(R.id.valueAbove);
+        EditText textValueAboveValidator = (EditText) textViewValueAbove;
+        textValueAboveValidator.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+            }
+            @Override
+            public void afterTextChanged(Editable s) {
+                double amount;
+                int sLength;
+                sLength = s.length();
+                if (sLength <= 0) {
+                    textViewValueAbove.setError("Cannot be empty");
+                }
+                if (sLength > 0 && Double.parseDouble(s.toString()) <= 0) {
+                    textViewValueAbove.setError("Cannot be 0");
+                }
+            }
+        });
+
         getData(client);
     }
 
