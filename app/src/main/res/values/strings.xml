@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">Bitcoin Alert</string>
+    <string name="PriceHint">Must be more than zero</string>
 </resources>
